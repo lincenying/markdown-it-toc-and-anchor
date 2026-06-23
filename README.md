@@ -1,225 +1,202 @@
-# markdown-it-toc-and-anchor
-[![circleci](https://badgen.net/circleci/github/medfreeman/markdown-it-toc-and-anchor/master)](https://circleci.com/gh/medfreeman/markdown-it-toc-and-anchor)
-[![AppVeyor Build Status](https://img.shields.io/appveyor/ci/medfreeman/markdown-it-toc-and-anchor.svg?label=windows%20build)](https://ci.appveyor.com/project/medfreeman/markdown-it-toc-and-anchor)
-[![Version](https://img.shields.io/npm/v/markdown-it-toc-and-anchor.svg)](https://www.npmjs.com/package/markdown-it-toc-and-anchor)
-[![Coverage Status](https://img.shields.io/coveralls/medfreeman/markdown-it-toc-and-anchor/master.svg)](https://coveralls.io/github/medfreeman/markdown-it-toc-and-anchor?branch=master)
-[![Dependency Status](https://img.shields.io/david/medfreeman/markdown-it-toc-and-anchor.svg)](https://david-dm.org/medfreeman/markdown-it-toc-and-anchor) [![Greenkeeper badge](https://badges.greenkeeper.io/medfreeman/markdown-it-toc-and-anchor.svg)](https://greenkeeper.io/)
+# @lincy/markdown-it-toc-and-anchor
 
-> markdown-it plugin to add toc and anchor links in headings
+**English** | [简体中文](README-CN.md)
+
+[![npm version](https://img.shields.io/npm/v/@lincy/markdown-it-toc-and-anchor.svg)](https://www.npmjs.com/package/@lincy/markdown-it-toc-and-anchor)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+
+> [markdown-it](https://github.com/markdown-it/markdown-it) plugin that adds table of contents and anchor links to headings.
+
+Fork of [markdown-it-toc-and-anchor](https://github.com/medfreeman/markdown-it-toc-and-anchor), rewritten in TypeScript with built-in type definitions.
+
+## Features
+
+- Insert a table of contents at `@[toc]` in your Markdown
+- Add `id` attributes and optional anchor links (`#`) to headings
+- Customize TOC level range, CSS classes, slug generation, and anchor placement
+- Receive TOC data via callback (Markdown, structured array, or HTML)
 
 ## Installation
 
-```console
-$ yarn add markdown-it-toc-and-anchor
+```bash
+pnpm add @lincy/markdown-it-toc-and-anchor markdown-it
 ```
+
+```bash
+npm install @lincy/markdown-it-toc-and-anchor markdown-it
+```
+
+```bash
+yarn add @lincy/markdown-it-toc-and-anchor markdown-it
+```
+
+`markdown-it` is a peer dependency at runtime — install it in your project.
 
 ## Usage
 
-### ES6
+### Basic
 
-```js
-import markdownIt from "markdown-it"
-import markdownItTocAndAnchor from "markdown-it-toc-and-anchor"
+Place `@[toc]` where you want the table of contents to appear:
 
-markdownIt({
-    html: true,
-    linkify: true,
-    typographer: true,
-  })
-    .use(markdownItTocAndAnchor, {
-      // ...options
-    })
-    .render(md)
+```md
+@[toc]
+
+# Introduction
+
+## Getting started
 ```
 
-### ES5 / CommonJS
+```ts
+import markdownItTocAndAnchor from '@lincy/markdown-it-toc-and-anchor'
+import MarkdownIt from 'markdown-it'
 
-```js
-var markdownIt = require('markdown-it'),
-    markdownItTocAndAnchor = require('markdown-it-toc-and-anchor').default;
-
-markdownIt({
+const md = new MarkdownIt({
     html: true,
     linkify: true,
-    typographer: true,
-  })
-    .use(markdownItTocAndAnchor, {
-      // ...options
-    })
-    .render(md)
+})
+
+md.use(markdownItTocAndAnchor)
+
+const html = md.render(markdown)
 ```
 
-:information_source: Note that the 'default' property has to be used when requiring this plugin, this is due to the use of Babel 6 now making ES6 compliant exports ([Misunderstanding ES6 Modules, Upgrading Babel, Tears, and a Solution
-](https://medium.com/@kentcdodds/misunderstanding-es6-modules-upgrading-babel-tears-and-a-solution-ad2d5ab93ce0#.enq6dfcnn))
+Rendered output includes a TOC list at the `@[toc]` position and `id` attributes on each heading. Anchor links are enabled by default.
 
-### Options
+### With options
 
-#### `toc`
+```ts
+import markdownItTocAndAnchor from '@lincy/markdown-it-toc-and-anchor'
+import MarkdownIt from 'markdown-it'
 
-(default: `true`)
+const md = new MarkdownIt({ html: true, linkify: true })
 
-Allows you to enable/disable the toc transformation of `@[toc]`
+md.use(markdownItTocAndAnchor, {
+    tocClassName: 'table-of-contents',
+    anchorLinkSymbol: '¶',
+    anchorLinkBefore: false,
+    tocFirstLevel: 2,
+    tocLastLevel: 4,
+})
 
-#### `tocClassName`
-
-(default: `"markdownIt-TOC"`)
-
-Option to customize html class of the `<ul>` wrapping the toc. If no class is wanted set to `null`.
-
-#### `tocFirstLevel`
-
-(default: `1`)
-
-Allows you to skip some heading level. Example: use 2 if you want to skip `<h1>`
-from the TOC.
-
-#### `tocLastLevel`
-
-(default: `6`)
-
-Allows you to skip some heading level. Example: use 5 if you want to skip `<h6>`
-from the TOC.
-
-#### `tocCallback`
-
-(default: `null`)
-
-Allows you to get toc contents externally by executing a callback function returning toc elements, in addition / instead of using @[toc] tag in content.
-Example :
-
+const html = md.render(markdown)
 ```
-  markdownIt({
-    html: true,
-    linkify: true,
-    typographer: true,
-  })
-    .use(markdownItTocAndAnchor, {
-      tocCallback: function(tocMarkdown, tocArray, tocHtml) {
+
+### TypeScript
+
+The plugin exports types you can import directly:
+
+```ts
+import type {
+    PluginOptions,
+    TocCallback,
+    TocHeading,
+} from '@lincy/markdown-it-toc-and-anchor'
+```
+
+## Options
+
+All options are optional.
+
+| Option | Type | Default | Description |
+| --- | --- | --- | --- |
+| `toc` | `boolean` | `true` | Enable or disable replacing `@[toc]` with the generated TOC HTML |
+| `tocClassName` | `string \| null` | `"markdownIt-TOC"` | CSS class for the TOC `<ul>`. Set to `null` to omit the class |
+| `tocFirstLevel` | `number` | `1` | Lowest heading level included in the TOC (e.g. `2` skips `<h1>`) |
+| `tocLastLevel` | `number` | `6` | Highest heading level included in the TOC (e.g. `5` skips `<h6>`) |
+| `tocCallback` | `TocCallback \| null` | `null` | Callback invoked with TOC data after parsing. See [TOC callback](#toc-callback) |
+| `anchorLink` | `boolean` | `true` | Add clickable anchor links inside headings |
+| `anchorLinkSymbol` | `string` | `"#"` | Text shown for the anchor link |
+| `anchorLinkBefore` | `boolean` | `true` | Place the anchor link before (`true`) or after (`false`) the heading text |
+| `anchorLinkSpace` | `boolean` | `true` | Insert a space between the anchor link and heading text |
+| `anchorLinkSymbolClassName` | `string \| null` | `null` | When set, wrap the symbol in `<span class="...">` |
+| `anchorClassName` | `string \| null` | `"markdownIt-Anchor"` | CSS class for anchor `<a>` elements. Set to `null` to omit |
+| `anchorLinkPrefix` | `string` | `undefined` | Prefix added to generated heading IDs (e.g. `"section-"`) |
+| `wrapHeadingTextInAnchor` | `boolean` | `false` | Wrap the entire heading text in the anchor link (overrides symbol and position options) |
+| `resetIds` | `boolean` | `true` | Reset duplicate-ID counters on each render. Set to `false` when rendering multiple documents on one page |
+| `slugify` | `(value: string) => string` | [`uslug`](https://www.npmjs.com/package/uslug) | Custom function to generate heading IDs from text |
+
+### Custom slugify
+
+```ts
+md.use(markdownItTocAndAnchor, {
+    slugify: value => `/some/prefix/${value.replace(/([/ '])/g, '_')}`,
+})
+```
+
+## TOC callback
+
+Use `tocCallback` to receive TOC data without inserting it into the document, or in addition to `@[toc]`.
+
+```ts
+interface TocHeading {
+    content: string
+    anchor: string
+    level: number
+}
+
+type TocCallback = (
+    tocMarkdown: string,
+    tocArray: TocHeading[],
+    tocHtml: string,
+) => void
+```
+
+### Plugin options
+
+```ts
+md.use(markdownItTocAndAnchor, {
+    toc: false,
+    tocCallback(tocMarkdown, tocArray, tocHtml) {
         console.log(tocHtml)
-      }
-    })
-    .render(md)
+    },
+})
 ```
 
-To allow callback to be more flexible, this option is also available in global markdown-it options, and in render environment.
-Example :
+### Global markdown-it options
 
-##### Callback in global markdown-it options
+```ts
+const md = new MarkdownIt().use(markdownItTocAndAnchor)
 
-```
-  var mdIt = markdownIt({
-    html: true,
-    linkify: true,
-    typographer: true,
-  })
-    .use(markdownItTocAndAnchor)
-
-  ....
-
-  mdIt.set({
-    tocCallback: function(tocMarkdown, tocArray, tocHtml) {
-      console.log(tocHtml)
-    }
-  })
-    .render(md)
-```
-
-##### Callback in render environment
-
-```
-  var mdIt = markdownIt({
-    html: true,
-    linkify: true,
-    typographer: true,
-  })
-    .use(markdownItTocAndAnchor)
-
-  ....
-
-  mdIt
-    .render(md, {
-      tocCallback: function(tocMarkdown, tocArray, tocHtml) {
+md.set({
+    tocCallback(tocMarkdown, tocArray, tocHtml) {
         console.log(tocHtml)
-      }
-    })
+    },
+})
+
+md.render(markdown)
 ```
 
-#### `anchorLink`
+### Render environment
 
-(default: `true`)
-
-Allows you to enable/disable the anchor link in the headings
-
-#### `anchorLinkSymbol`
-
-(default: `"#"`)
-
-Allows you to customize the anchor link symbol
-
-#### `anchorLinkSpace`
-
-(default: `true`)
-
-Allows you to enable/disable inserting a space between the anchor link and heading.
-
-#### `anchorLinkSymbolClassName`
-
-(default: `null`)
-
-Allows you to customize the anchor link symbol class name. If not null, symbol will be rendered as `<span class="anchorLinkSymbolClassName">anchorLinkSymbol</span>`.
-
-#### `anchorLinkBefore`
-
-(default: `true`)
-
-Allows you to prepend/append the anchor link in the headings
-
-#### `anchorLinkPrefix`
-
-(default: `undefined`)
-
-Allows you to add a prefix to the generated header ids, e.g. `section-`.
-
-#### `anchorClassName`
-
-(default: `"markdownIt-Anchor"`)
-
-Allows you to customize the anchor link class. If no class is wanted set to `null`.
-
-#### `wrapHeadingTextInAnchor`
-
-(default: `false`)
-
-Makes the entire heading into the anchor link (takes precedence over `anchorLinkSymbol` and `anchorLinkBefore`)
-
-#### `resetIds`
-
-(default: `true`)
-
-Allows you to reset (or not) ids incrementation. Use it if you will have multiple
-documents on the same page.
-
-#### `slugify`
-
-(default: uses the [`uslug`](https://www.npmjs.com/package/uslug) package)
-
-Allows you to customize the slug function that create ids from string.
-
-Ex:
-```js
-   // ...
-   slugify : string => `/some/prefix/${string.replace(/(\/| |')/g, "_")}`
-   // ...
+```ts
+md.render(markdown, {
+    tocCallback(tocMarkdown, tocArray, tocHtml) {
+        console.log(tocHtml)
+    },
+})
 ```
 
----
+When multiple sources define a callback, priority is: render environment → plugin options → global markdown-it options.
 
-## CONTRIBUTING
+## Development
 
-* ⇄ Pull requests and ★ Stars are always welcome.
-* For bugs and feature requests, please create an issue.
-* Pull requests must be accompanied by passing automated tests (`$ npm test`).
+```bash
+pnpm install
+pnpm test          # run tests
+pnpm test:watch    # watch mode
+pnpm build         # compile to dist/
+pnpm lint          # eslint
+pnpm lint:ts       # type check
+```
 
-## [CHANGELOG](CHANGELOG.md)
+## Contributing
 
-## [LICENSE](LICENSE)
+- Pull requests and stars are welcome.
+- For bugs and feature requests, please [open an issue](https://github.com/lincenying/markdown-it-toc-and-anchor/issues).
+- Pull requests should include passing tests (`pnpm test`).
+
+## [Changelog](CHANGELOG.md)
+
+## [License](LICENSE)
+
+MIT — see [LICENSE](LICENSE). Based on the original work by [Maxime Thirouin](https://github.com/medfreeman/markdown-it-toc-and-anchor).

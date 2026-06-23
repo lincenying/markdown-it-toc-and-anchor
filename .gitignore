@@ -12,3 +12,4 @@ dist
 
 # code coverage
 .nyc_output
+coverage
